@@ -3,6 +3,8 @@ package game2048;
 import java.util.Formatter;
 import java.util.Observable;
 
+import javax.swing.border.Border;
+
 
 /** The state of a game of 2048.
  *  @author TODO: YOUR NAME HERE
@@ -110,9 +112,45 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
 
+        board.setViewingPerspective(side);
+
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        boolean changedInLoop = false;
+        for(int c = 0; c < board.size(); c++) {
+
+            
+            int[] moveSame = findSamelocation(c);
+
+            int[] moveNull = findNulllocation(c);
+
+            int move = 0;
+            boolean findFirstMove = false;
+            for(int r = board.size() - 1; r >= 0; r--) {
+                move += moveSame[r] + moveNull[r];
+                if(moveNull[r] == 1) findFirstMove = true;
+                if(moveSame[r] == 1){
+                    Tile t = board.tile(c, r);
+                    board.move(c, r + move, t);
+                    score += board.tile(c, r + move).value(); 
+                    //System.out.printf("%d %d -> %d %d\n", c, r, c, r + move);
+                    changedInLoop = true;
+                    findFirstMove = true;
+                }
+                else if (findFirstMove
+                && moveNull[r] == 0) {
+                    Tile t = board.tile(c, r);
+                    board.move(c, r + move, t);
+                    //System.out.printf("%d %d -> %d %d\n", c, r, c, r + move);
+                    changedInLoop = true;
+                }
+            }// end loop
+
+        }// end loop
+        changed = changedInLoop;
+
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -120,6 +158,86 @@ public class Model extends Observable {
         }
         return changed;
     }
+
+
+/** 
+ * private help methods which are only used in  public boolean tilt(Side side).
+ * 
+ * 
+*/
+ 
+/**
+ * Find location of the same second value in a column when it towds North.
+ * Ex, if the column is 2, the result is [0]. 0  -> 0 , 0  -> 0 , 0  -> 0
+ *                      4                 0   4     0   4     0   4     0
+ *                      0                 0   0     0   4     1   8     0
+ *                      4                 1   4     1   4     0   4     0
+ * 
+ * @param c
+ * @return moveSame
+ */
+private int[] findSamelocation(int c){
+    int[] moveSame = new int[board.size()];
+    int previousTitlerow = board.size() - 1;
+    boolean findValue = false;
+            for(int r = board.size() - 1; r >= 0; r--) {
+                if(board.tile(c, previousTitlerow) == null) {
+                    if(!findValue) previousTitlerow = r - 1;
+                }
+                else {
+                    if(!findValue) {
+                        findValue = true;
+                        previousTitlerow = r;
+                    }
+                    else {
+                        if(board.tile(c, r) != null){
+                            if(board.tile(c, previousTitlerow).value() == board.tile(c, r).value())
+                            {
+                                moveSame[r] = 1;
+                                if(r - 1 >= 0) {
+                                    previousTitlerow = r - 1;    
+                                }
+                                findValue = false;
+                            }
+                            else {
+                                if(r - 1 >= 0) {
+                                    previousTitlerow = r;
+                                }
+                            }
+                        }
+                    }
+                }//end else
+                //end if
+   
+            }//end forloop c
+            //System.out.printf("%d %d %d %d %d\n", c, moveSame[0], moveSame[1], moveSame[2], moveSame[3]); 
+    return moveSame;
+
+}
+
+/**
+ * 
+ * 
+ * @param c
+ * @return moveNull
+ */
+private int[] findNulllocation(int c) {
+    int[] moveNull = new int[board.size()];
+    boolean findFirstValue = false;
+    for(int r = 0; r < board.size(); r++) {
+        if(board.tile(c, r) == null) {
+            if(findFirstValue) moveNull[r] = 1;
+            else moveNull[r] = -1;
+        }
+        else {
+            if(!findFirstValue) findFirstValue = true;
+        }
+
+    }// end loop
+    //System.out.printf("%d %d %d %d %d\n", c, moveNull[0], moveNull[1], moveNull[2], moveNull[3]);
+    return moveNull;
+}
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -137,7 +255,15 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        /*for(int i = 0; i < b.size(); i++){
+           for(int j = 0; j < b.size(); j++){
+               if(b.tile(i, j)  == null) return true;
+           }
+
+        }*/
+        for(Tile tile:b){
+            if(tile == null) return true;
+        }
         return false;
     }
 
@@ -147,7 +273,14 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        /*for(int i = 0; i < b.size(); i++){
+            for(int j = 0; j < b.size(); j++){
+                if(b.tile(i, j).value()  == MAX_PIECE) return true;
+            }
+         }*/
+         for(Tile tile:b){
+            if(tile != null && tile.value() == MAX_PIECE) return true;
+        }
         return false;
     }
 
@@ -158,7 +291,27 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        for(int i = 0; i < b.size(); i++) {
+            for(int j = 0; j < b.size(); j++) {
+                if(i < b.size()-1  && j < b.size()-1) {                                 //normal situation
+                    if(b.tile(i, j) == null
+                    || b.tile(i, j+1) == null
+                    || b.tile(i + 1, j) == null
+                    || b.tile(i, j).value() == b.tile(i, j + 1).value() 
+                    || b.tile(i, j).value() == b.tile(i + 1, j).value()) return true;
+                }
+                if(i < b.size()-1 && j == b.size() - 1) {                          //most right side
+                    if(//b.tile(i, j) == null
+                        b.tile(i + 1, j) == null
+                        || b.tile(i, j).value() == b.tile(i + 1, j).value()) return true;
+                }
+                if(i == b.size()-1  && j < b.size()-1) {                           //most bottom
+                        if(//b.tile(i, j) == null
+                        //|| b.tile(i, j+1) == null
+                        b.tile(i, j).value() == b.tile(i, j + 1).value()) return true;
+                }
+            }
+         }
         return false;
     }
 
