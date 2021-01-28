@@ -13,6 +13,7 @@ public class Main {
     static final int BOARD_SIZE = 4;
     /** Probability of choosing 2 as random tile (as opposed to 4). */
     static final double TILE2_PROBABILITY = 0.9;
+    // add gagin merge
 
     /** The main program.  ARGS may contain the options --seed=NUM,
      *  (random seed); --log (record moves and random tiles
@@ -21,6 +22,7 @@ public class Main {
         CommandArgs options =
             new CommandArgs("--seed=(\\d+) --log=(.+)",
                             args);
+                            
         if (!options.ok()) {
             System.err.println("Usage: java game2048.Main [ --seed=NUM ] "
                                + "[ --log=LOG_FILE ]");
