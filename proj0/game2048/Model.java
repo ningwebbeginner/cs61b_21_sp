@@ -119,8 +119,7 @@ public class Model extends Observable {
         // changed local variable to true.
         boolean changedInLoop = false;
         for(int c = 0; c < board.size(); c++) {
-
-            
+  
             int[] moveSame = findSamelocation(c);
 
             int[] moveNull = findNulllocation(c);
@@ -216,7 +215,11 @@ private int[] findSamelocation(int c){
 }
 
 /**
- * 
+ * Find location of the same second value in a column when it towds North.
+ * Ex, if the column is 2, the result is [0]. 0  -> 1 , 0  -> 1 , 0  -> 1
+ *                      4                 0   4     0   4     0   4     0
+ *                      0                 1   0     1   4     0   8     0
+ *                      4                 0   4     0   4     0   0     -1
  * 
  * @param c
  * @return moveNull
