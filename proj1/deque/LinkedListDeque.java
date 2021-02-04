@@ -1,8 +1,9 @@
 package deque;
 
+
 import java.util.Iterator;
 
-public class LinkedListDeque<T> {
+public class LinkedListDeque<T> implements Deque<T> {
     private Node sentinel;
     private int size;
 
@@ -11,11 +12,13 @@ public class LinkedListDeque<T> {
         size = 0;
     }
 
+    @Override
     public void addFirst(T item) {
         addLast(item);
         sentinel = sentinel.previous;
     }
 
+    @Override
     public void addLast(T x) {
 
         Node p = sentinel;
@@ -32,6 +35,7 @@ public class LinkedListDeque<T> {
         size += 1;
     }
 
+    @Override
     public T removeFirst() {
         if (size > 0) {
             Node p = sentinel;
@@ -45,6 +49,7 @@ public class LinkedListDeque<T> {
             return null;
     }
 
+    @Override
     public T removeLast() {
         if (size > 0) {
             sentinel = sentinel.previous;
@@ -54,14 +59,14 @@ public class LinkedListDeque<T> {
             return null;
     }
 
-    public boolean isEmpty() {
-        return size == 0;
-    }
 
+
+    @Override
     public int size() {
         return size;
     }
 
+    @Override
     public void printDeque() {
         System.out.println("The Deque:");
         if (size > 0) {
@@ -75,6 +80,7 @@ public class LinkedListDeque<T> {
         System.out.println();
     }
 
+    @Override
     public T get(int index) {
         if (size > 0 && index < size && index >= 0) {
             Node itrat = sentinel;
@@ -86,6 +92,8 @@ public class LinkedListDeque<T> {
         else
             return null;
     }
+
+
 
     public T getRecursive(int index) {
         if (size > 0 && index < size && index >= 0) {
@@ -137,7 +145,14 @@ public class LinkedListDeque<T> {
     }*/
 
     @Override
+    public Iterator<T> iterator() {
+        //TODO
+        return null;
+    }
+
+    @Override
     public boolean equals(Object o) {
+        //TODO
         if(o instanceof LinkedListDeque) {
             LinkedListDeque lis = (LinkedListDeque) o;
             if(lis.size() == size) {
