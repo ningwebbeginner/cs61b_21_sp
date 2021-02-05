@@ -4,11 +4,11 @@ public class ArrayDequeTest extends DequeInstanceTest{
 
     @Override
     public Deque<String> emptyStringInstance() {
-        return new ArrayDeque<String>();
+        return new ArrayDeque<>();
     }
 
     @Override
     public Deque<Integer> emptyIntegerInstance() {
-        return new ArrayDeque<Integer>();
+        return new ArrayDeque<>();
     }
 }
