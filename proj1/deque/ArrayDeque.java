@@ -4,14 +4,14 @@ package deque;
 import java.util.Iterator;
 
 public class ArrayDeque<T> implements Deque<T> {
-    T[] items;
-    int size;
-    int nextFirst;
-    int nextLast;
-    static final int Initial_Cap = 8;
-    static final int Factor = 2;
-    static final double usage_factor= 0.25;
-    int cap;
+    private static final int Initial_Cap = 8;
+    private static final int Factor = 2;
+    private static final double usage_factor = 0.25;
+    private T[] items;
+    private int size;
+    private int nextFirst;
+    private int nextLast;
+    private int cap;
 
     public ArrayDeque() {
         items = (T[]) new Object[Initial_Cap];
@@ -30,7 +30,7 @@ public class ArrayDeque<T> implements Deque<T> {
      *                negative to move backward.
      * @return the position after removing
      */
-    private int moveIndexPos(int starPos,int movePos) {
+    private int moveIndexPos(int starPos, int movePos) {
         return (starPos + movePos + cap) % cap;
     }
 
@@ -54,7 +54,6 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
 
-
     @Override
     public int size() {
         return size;
@@ -63,7 +62,7 @@ public class ArrayDeque<T> implements Deque<T> {
     @Override
     public void printDeque() {
         System.out.println("The Deque:");
-        for (T item:this) {
+        for (T item : this) {
             System.out.print(item + " ");
         }
         System.out.println();
@@ -75,7 +74,6 @@ public class ArrayDeque<T> implements Deque<T> {
             if (size < cap * usage_factor) {
                 resize((int) (cap * usage_factor * 2));
             }
-            //nextFirst = (nextFirst + 1 + cap) % cap;
             nextFirst = moveIndexPos(nextFirst, 1);
             size--;
             T result = items[nextFirst];
@@ -110,12 +108,11 @@ public class ArrayDeque<T> implements Deque<T> {
     }
 
 
-
     private void resize(int capacity) {
         if (capacity >= Initial_Cap) {
-            T[] a = (T[])new Object[capacity];
+            T[] a = (T[]) new Object[capacity];
             int i = 0;
-            for (T item:this) {
+            for (T item : this) {
                 a[i] = item;
                 i++;
             }
@@ -124,6 +121,33 @@ public class ArrayDeque<T> implements Deque<T> {
             nextLast = size;
             items = a;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ArrayDeque)) {
+            return false;
+        }
+
+        final ArrayDeque<T> object = (ArrayDeque) o;
+        if (object.size != size) {
+            return false;
+        }
+        int index = 0;
+        for (T item:object) {
+            if (!item.equals(this.get(index))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hashCode = 1;
+        for (T item : this)
+            hashCode = 31*hashCode + (item==null ? 0 : item.hashCode());
+        return hashCode;
     }
 
     @Override
@@ -146,7 +170,7 @@ public class ArrayDeque<T> implements Deque<T> {
         @Override
         public T next() {
             T returnItem = items[moveIndexPos(nextFirst, itPos + 1)];
-            itPos ++;
+            itPos++;
             return returnItem;
         }
     }

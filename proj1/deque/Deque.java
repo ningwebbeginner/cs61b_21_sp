@@ -6,6 +6,16 @@ public interface Deque<T> extends Iterable<T> {
 
 
     /**
+     * Create an empty graph.
+     *
+     * @param <L> type of vertex labels in the graph, must be immutable
+     * @return a new empty weighted directed graph
+     */
+    public static <T> Deque<T> empty() {
+        return new ArrayDeque<T>();
+    }
+
+    /**
      * Adds an item of type T to the front of the deque. You can assume that item is never null.
      *
      * @param item label for the new item
@@ -62,6 +72,7 @@ public interface Deque<T> extends Iterable<T> {
      */
     public T get(int index);
 
+    @Override
     /**
      * The Deque is an iterable (i.e. Iterable<T>) so we must provide this method to return an iterator.
      *
@@ -69,8 +80,9 @@ public interface Deque<T> extends Iterable<T> {
      */
     public Iterator<T> iterator();
 
+    @Override
     /**
-     *Returns whether or not the parameter o is equal to the Deque.
+     * Returns whether or not the parameter o is equal to the Deque.
      * o is considered equal if it is a Deque and if it contains the same contents
      * (as goverened by the generic T’s equals method) in the same order.
      *
@@ -79,4 +91,7 @@ public interface Deque<T> extends Iterable<T> {
      *          otherwise return false.
      */
     public boolean equals(Object o);
+
+    @Override
+    public int hashCode();
 }

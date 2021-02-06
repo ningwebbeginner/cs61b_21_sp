@@ -2,19 +2,18 @@ package gh2;
 
 import deque.Deque;
 
-//Note: This file will not compile until you complete the Deque implementations
-public class GuitarString {
+public class HarpString {
     /** Constants. Do not change. In case you're curious, the keyword final
      * means the values cannot be changed at runtime. We'll discuss this and
      * other topics in lecture on Friday. */
     private static final int SR = 44100;      // Sampling Rate
-    private static final double DECAY = .996; // energy decay factor
+    private static final double DECAY = 1.0; // energy decay factor
 
     /* Buffer for storing sound data. */
     private Deque<Double> buffer;
 
     /* Create a guitar string of the given frequency.  */
-    public GuitarString(double frequency) {
+    public HarpString(double frequency) {
         // TODO: Create a buffer with capacity = SR / frequency. You'll need to
         //       cast the result of this division operation into an int. For
         //       better accuracy, use the Math.round() function before casting.
@@ -52,7 +51,14 @@ public class GuitarString {
         //       the average of the two multiplied by the DECAY factor.
         //       **Do not call StdAudio.play().**
         double first = buffer.removeFirst();
-        buffer.addLast((first + buffer.get(0)) / 2 * DECAY);
+        double r = Math.random();
+        if (r < 0.5) {
+            buffer.addLast(-1 * (first + buffer.get(0)) / 2 * DECAY);
+        }
+        else {
+            buffer.addLast((first + buffer.get(0)) / 2 * DECAY);
+        }
+
     }
 
     /* Return the double at the front of the buffer. */
