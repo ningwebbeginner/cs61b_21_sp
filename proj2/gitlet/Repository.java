@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import static gitlet.Utils.*;
 
@@ -83,9 +84,25 @@ public class Repository {
         if(!addFile.exists() || addFile.isDirectory()) {
             Utils.error("File does not exist.");
         }
+        staggingFile(addFile);
 
+    }
+
+    private static void staggingFile(File addFile) {
+        File index_File = join(GITLET_DIR, "index");
         String fileContentUID = Utils.sha1(Utils.readContents(addFile));
-
+        if(!index_File.exists()) {
+            try {
+                index_File.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Utils.writeObject(index_File, new HashMap<File, String>().put(addFile, fileContentUID));
+        }
+        else {
+            HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
+            Utils.writeObject(index_File, readFile.put(addFile, fileContentUID));
+        }
     }
 
     public static void commit(String arg) {
