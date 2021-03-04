@@ -84,31 +84,52 @@ public class Repository {
         checkInit();
         File addFile = join(CWD, arg);
         if(!addFile.exists() || addFile.isDirectory()) {
-            Utils.error("File does not exist.");
+            System.out.println("File does not exist.");
+            System.exit(0);
         }
         staggingFile(addFile);
-
     }
 
     private static void staggingFile(File addFile) {
         File index_File = join(GITLET_DIR, "index");
         String fileContentUID = Utils.sha1(Utils.readContents(addFile));
+        File newFileInBlob = addFileInBlob(addFile, fileContentUID);
         if(!index_File.exists()) {
             try {
                 index_File.createNewFile();
+                HashMap<File, String> save = new HashMap<>();
+                save.put(addFile, fileContentUID);
+                Utils.writeObject(index_File, save);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            HashMap<File, String> save = new HashMap<File, String>();
-            save.put(addFile, fileContentUID);
-            Utils.writeObject(index_File, save);
         }
         else {
             HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
-            //TODO 3/3
-            //Utils.writeObject(index_File, readFile.put(addFile, fileContentUID));
+            String RemoveFileUID = readFile.put(addFile, fileContentUID);
+            if(RemoveFileUID != null) {
+                boolean result = removeFileInBlob(RemoveFileUID);
+            }
+            Utils.writeObject(index_File, readFile);
         }
     }
+
+    private static boolean removeFileInBlob(String removeFileUID) {
+        File removeFileInBlob = join(BLOB_DIR, removeFileUID);
+            return removeFileInBlob.delete();
+    }
+
+    private static File addFileInBlob(File addFile, String fileContentUID) {
+        File addFileInBlob = join(BLOB_DIR, fileContentUID);
+        try {
+            addFileInBlob.createNewFile();
+            Utils.writeContents(addFileInBlob, Utils.readContents(addFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return addFileInBlob;
+    }
+
 
     public static void commit(String arg) {
     }
