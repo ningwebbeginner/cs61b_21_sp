@@ -48,7 +48,7 @@ public class Repository {
             COMMIT_DIR.mkdir();
             BLOB_DIR.mkdir();
             BRANCH_DIR.mkdir();
-            String master_UID = "new Commit().saveFile()";
+            String master_UID = new Commit().saveFile();
             addBranchFile("master", master_UID);
             try {
                 HEAD.createNewFile();
