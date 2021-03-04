@@ -47,7 +47,8 @@ public class Repository {
             GITLET_DIR.mkdir();
             COMMIT_DIR.mkdir();
             BLOB_DIR.mkdir();
-            String master_UID = new Commit().saveFile();
+            BRANCH_DIR.mkdir();
+            String master_UID = "new Commit().saveFile()";
             addBranchFile("master", master_UID);
             try {
                 HEAD.createNewFile();
@@ -57,7 +58,7 @@ public class Repository {
             Utils.writeContents(HEAD, master_UID);
         }
         else {
-            Utils.error("A Gitlet version-control system already exists in the current directory.");
+            System.out.println("A Gitlet version-control system already exists in the current directory.");
         }
     }
 
@@ -65,15 +66,16 @@ public class Repository {
         File masterFile = join(BRANCH_DIR, branch);
         try {
             masterFile.createNewFile();
+            Utils.writeContents(masterFile, branch_uid);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Utils.writeContents(masterFile, branch_uid);
     }
 
     private static void checkInit() {
         if (!GITLET_DIR.exists() || !GITLET_DIR.isDirectory()) {
-            throw new RuntimeException("Not in an initialized Gitlet directory.");
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
         }
     }
 
@@ -97,11 +99,14 @@ public class Repository {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            Utils.writeObject(index_File, new HashMap<File, String>().put(addFile, fileContentUID));
+            HashMap<File, String> save = new HashMap<File, String>();
+            save.put(addFile, fileContentUID);
+            Utils.writeObject(index_File, save);
         }
         else {
             HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
-            Utils.writeObject(index_File, readFile.put(addFile, fileContentUID));
+            //TODO 3/3
+            //Utils.writeObject(index_File, readFile.put(addFile, fileContentUID));
         }
     }
 

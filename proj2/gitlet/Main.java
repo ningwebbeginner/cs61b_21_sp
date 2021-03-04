@@ -16,26 +16,26 @@ public class Main {
         }
 
         String firstArg = args[0];
-        switch(firstArg) {
-            case "init":
-                // TODO: handle the `init` command
+        // TODO: handle the `init` command
+        // TODO: handle the `add [filename]` command
+        // TODO: FILL THE REST IN
+        switch (firstArg) {
+            case "init" -> {
                 validateNumArgs("init", args, 1);
                 Repository.init();
-                break;
-            case "add":
-                // TODO: handle the `add [filename]` command
+            }
+            case "add" -> {
                 validateNumArgs("add", args, 2);
                 Repository.add(args[1]);
-                break;
-            // TODO: FILL THE REST IN
-            case "commit":
+            }
+            case "commit" -> {
                 validateNumArgs("commit", args, 2);
                 Repository.commit(args[1]);
-                break;
-            case "checkout":
+            }
+            case "checkout" -> {
                 int argLength = args.length;
                 validateNumArgs("checkout", args, 2, 4);
-                switch(argLength) {
+                switch (argLength) {
                     case 2:
                         Repository.checkoutBranch(args[1]);
                         break;
@@ -46,13 +46,12 @@ public class Main {
                         Repository.checkoutIdWithFilename(args[1], args[2], args[3]);
                         break;
                 }
-                break;
-            case "log":
+            }
+            case "log" -> {
                 validateNumArgs("log", args, 1);
                 Repository.log();
-                break;
-            default:
-                Utils.error("No command with that name exists.");
+            }
+            default -> Utils.error("No command with that name exists.");
         }
     }
 
