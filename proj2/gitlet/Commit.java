@@ -65,6 +65,10 @@ public class Commit implements Serializable {
         return nameToBlob;
     }
 
+    public boolean isIDexist(String Uid) {
+        return nameToBlob.containsValue(Uid);
+    }
+
     public String saveFile() {
         String tempStringFile = Utils.sha1(String.valueOf(0));
         File tempFile = join(COMMIT_DIR, tempStringFile);

@@ -73,13 +73,26 @@ public class Repository {
     }
 
     private static void checkInit() {
-        if (!GITLET_DIR.exists() || !GITLET_DIR.isDirectory()) {
+        if (!GITLET_DIR.isDirectory()
+        || !COMMIT_DIR.isDirectory()
+        || !BLOB_DIR.isDirectory()
+        || !BRANCH_DIR.isDirectory()
+        || !HEAD.exists()) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
     }
 
 
+    /**
+     * adding a file is also called staging the file for addition.
+     * 1. Staging an already-staged file overwrites the previous entry in the staging area with the new contents.
+     * 2. If the current working version of the file is identical to the version in the current commit,
+     * do not stage it to be added, and remove it from the staging area if it is already there
+     * (as can happen when a file is changed, added, and then changed back to it’s original version).
+     * 3. The file will no longer be staged for removal (see gitlet rm),
+     * if it was at the time of the command.
+     */
     public static void add(String arg) {
         checkInit();
         File addFile = join(CWD, arg);
@@ -87,32 +100,78 @@ public class Repository {
             System.out.println("File does not exist.");
             System.exit(0);
         }
-        staggingFile(addFile);
+        staggingAddFile(addFile);
     }
 
-    private static void staggingFile(File addFile) {
-        File index_File = join(GITLET_DIR, "index");
-        String fileContentUID = Utils.sha1(Utils.readContents(addFile));
+    private static void staggingAddFile(File addFile) {
+        String fileContentUID = getContentID(addFile);
+        if(readCurentCommit().isIDexist(fileContentUID)) {
+            removeInIndex(addFile, fileContentUID);
+            return;
+        }
         File newFileInBlob = addFileInBlob(addFile, fileContentUID);
+        addtoIndex(addFile, fileContentUID);
+    }
+
+    //TODO test after finish commit()
+    private static void removeInIndex(File addFile, String fileUID) {
+        File index_File = join(GITLET_DIR, "index");
+        if(index_File.exists()) {
+            HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
+            if(readFile.containsValue(fileUID)) {
+                String removeFile = readFile.remove(readFile.get(addFile));
+                removeFileInBlob(removeFile);
+            }
+            if(readFile.size() == 0){
+                index_File.delete();
+            }
+            else {
+                Utils.writeObject(index_File, readFile);
+            }
+        }
+    }
+
+    private static void addtoIndex(File addFile, String fileContentUID) {
+        File index_File = join(GITLET_DIR, "index");
         if(!index_File.exists()) {
             try {
                 index_File.createNewFile();
-                HashMap<File, String> save = new HashMap<>();
-                save.put(addFile, fileContentUID);
-                Utils.writeObject(index_File, save);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            HashMap<File, String> save = new HashMap<>();
+            save.put(addFile, fileContentUID);
+            Utils.writeObject(index_File, save);
         }
         else {
             HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
             String RemoveFileUID = readFile.put(addFile, fileContentUID);
             if(RemoveFileUID != null) {
                 boolean result = removeFileInBlob(RemoveFileUID);
+                //TODO the file does not exist
             }
             Utils.writeObject(index_File, readFile);
         }
     }
+
+
+    private static Commit readCurentCommit() {
+        String headID = Utils.readContentsAsString(HEAD);
+        File currentCommitFile = join(COMMIT_DIR, headID);
+        if(!currentCommitFile.exists()) {
+            return null;
+        }
+        return Utils.readObject(currentCommitFile, Commit.class);
+    }
+
+    /*private class Blob {
+        Blob() {}
+
+    }*/
+
+        static String getContentID(File fileInCWD) {
+            return Utils.sha1(Utils.readContents(fileInCWD));
+        }
 
     private static boolean removeFileInBlob(String removeFileUID) {
         File removeFileInBlob = join(BLOB_DIR, removeFileUID);
