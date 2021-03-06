@@ -33,19 +33,19 @@ public class Commit implements Serializable {
     /** The message of this Commit. */
     private Date date;
     private String message;
-    private HashMap<String, String> nameToBlob;
+    private HashMap<File, String> nameToBlob;
     private String parentID;
     private String secondParentID;
 
     public Commit() {
         date = new Date(0);
         message = "initial commit";
-        nameToBlob = null;
+        nameToBlob = new HashMap<>();
         parentID = null;
         secondParentID = null;
     }
 
-    public Commit(String messageToSave, HashMap<String, String> saveMap, String parent1) {
+    public Commit(String messageToSave, HashMap<File, String> saveMap, String parent1) {
         date = new Date();
         message = messageToSave;
         nameToBlob = saveMap;
@@ -53,7 +53,7 @@ public class Commit implements Serializable {
         secondParentID = null;
     }
 
-    public Commit(String messageToSave, HashMap<String, String> saveMap, String parent1, String parent2) {
+    public Commit(String messageToSave, HashMap<File, String> saveMap, String parent1, String parent2) {
         date = new Date();
         message = messageToSave;
         nameToBlob = saveMap;
@@ -61,7 +61,7 @@ public class Commit implements Serializable {
         secondParentID = parent2;
     }
 
-    public HashMap<String, String> getMap() {
+    public HashMap<File, String> getMap() {
         return nameToBlob;
     }
 
@@ -69,24 +69,14 @@ public class Commit implements Serializable {
         return nameToBlob.containsValue(Uid);
     }
 
+     public String thisID() {
+        return Utils.sha1(Utils.serialize(this));
+     }
+
     public String saveFile() {
-        String tempStringFile = Utils.sha1(String.valueOf(0));
-        File tempFile = join(COMMIT_DIR, tempStringFile);
-        try {
-            tempFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Utils.writeObject(tempFile, this);
-        String fileUID = Utils.sha1(Utils.readContents(tempFile));
+        String fileUID = Utils.sha1(Utils.serialize(this));
         File saveFile = join(COMMIT_DIR, fileUID);
-        try {
-            saveFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         Utils.writeObject(saveFile, this);
-        tempFile.delete();
         return fileUID;
     }
 

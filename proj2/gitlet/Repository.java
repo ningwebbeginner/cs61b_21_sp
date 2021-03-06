@@ -3,6 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 import static gitlet.Utils.*;
 
@@ -38,7 +39,7 @@ public class Repository {
     public static final File BLOB_DIR = join(GITLET_DIR, "blob");
     public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
     public static final File HEAD = join(GITLET_DIR, "HEAD");
-
+    public static final File INDEX_File = join(GITLET_DIR, "index");
 
     /* TODO: fill in the rest of this class. */
     
@@ -50,11 +51,7 @@ public class Repository {
             BRANCH_DIR.mkdir();
             String master_UID = new Commit().saveFile();
             addBranchFile("master", master_UID);
-            try {
-                HEAD.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            initIndex();
             Utils.writeContents(HEAD, master_UID);
         }
         else {
@@ -62,14 +59,14 @@ public class Repository {
         }
     }
 
+    private static void initIndex() {
+        Utils.writeObject(INDEX_File, new HashMap<File, String>());
+    }
+
+
     private static void addBranchFile(String branch, String branch_uid) {
         File masterFile = join(BRANCH_DIR, branch);
-        try {
-            masterFile.createNewFile();
-            Utils.writeContents(masterFile, branch_uid);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Utils.writeContents(masterFile, branch_uid);
     }
 
     private static void checkInit() {
@@ -77,7 +74,8 @@ public class Repository {
         || !COMMIT_DIR.isDirectory()
         || !BLOB_DIR.isDirectory()
         || !BRANCH_DIR.isDirectory()
-        || !HEAD.exists()) {
+        || !HEAD.exists()
+        || !INDEX_File.exists()) {
             System.out.println("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
@@ -100,12 +98,12 @@ public class Repository {
             System.out.println("File does not exist.");
             System.exit(0);
         }
-        staggingAddFile(addFile);
+        stagingAddFile(addFile);
     }
 
-    private static void staggingAddFile(File addFile) {
+    private static void stagingAddFile(File addFile) {
         String fileContentUID = getContentID(addFile);
-        if(readCurentCommit().isIDexist(fileContentUID)) {
+        if(readCurrentCommit().isIDexist(fileContentUID)) {
             removeInIndex(addFile, fileContentUID);
             return;
         }
@@ -113,49 +111,35 @@ public class Repository {
         addtoIndex(addFile, fileContentUID);
     }
 
-    //TODO test after finish commit()
-    private static void removeInIndex(File addFile, String fileUID) {
-        File index_File = join(GITLET_DIR, "index");
-        if(index_File.exists()) {
-            HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
+    /****************INDEX******************/
+    /****
+     *INDEX is the staging are of the command.
+     * The content of INDEX are entries:
+     * file to UID
+     * or file to null to remove.
+     */
+    //TODO: test after finish commit()
+    private static void removeInIndex(File file_CWD, String fileUID) {
+            HashMap<File, String> readFile = Utils.readObject(INDEX_File, HashMap.class);
             if(readFile.containsValue(fileUID)) {
-                String removeFile = readFile.remove(readFile.get(addFile));
-                removeFileInBlob(removeFile);
+                String removeFile = readFile.remove(readFile.get(file_CWD));
+                if(removeFile != null) removeFileInBlob(removeFile);
             }
-            if(readFile.size() == 0){
-                index_File.delete();
-            }
-            else {
-                Utils.writeObject(index_File, readFile);
-            }
-        }
+            Utils.writeObject(INDEX_File, readFile);
     }
 
-    private static void addtoIndex(File addFile, String fileContentUID) {
-        File index_File = join(GITLET_DIR, "index");
-        if(!index_File.exists()) {
-            try {
-                index_File.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            HashMap<File, String> save = new HashMap<>();
-            save.put(addFile, fileContentUID);
-            Utils.writeObject(index_File, save);
-        }
-        else {
-            HashMap<File, String> readFile = Utils.readObject(index_File, HashMap.class);
-            String RemoveFileUID = readFile.put(addFile, fileContentUID);
+    private static void addtoIndex(File file_CWD, String fileContentUID) {
+            HashMap<File, String> readFile = Utils.readObject(INDEX_File, HashMap.class);
+            String RemoveFileUID = readFile.put(file_CWD, fileContentUID);
             if(RemoveFileUID != null) {
                 boolean result = removeFileInBlob(RemoveFileUID);
                 //TODO the file does not exist
             }
-            Utils.writeObject(index_File, readFile);
-        }
+            Utils.writeObject(INDEX_File, readFile);
     }
+    /****************INDEX END******************/
 
-
-    private static Commit readCurentCommit() {
+    private static Commit readCurrentCommit() {
         String headID = Utils.readContentsAsString(HEAD);
         File currentCommitFile = join(COMMIT_DIR, headID);
         if(!currentCommitFile.exists()) {
@@ -164,15 +148,12 @@ public class Repository {
         return Utils.readObject(currentCommitFile, Commit.class);
     }
 
-    /*private class Blob {
-        Blob() {}
 
-    }*/
-
-        static String getContentID(File fileInCWD) {
+         static String getContentID(File fileInCWD) {
             return Utils.sha1(Utils.readContents(fileInCWD));
         }
 
+    /****************Blob (TO Be Class)******************/
     private static boolean removeFileInBlob(String removeFileUID) {
         File removeFileInBlob = join(BLOB_DIR, removeFileUID);
             return removeFileInBlob.delete();
@@ -180,17 +161,61 @@ public class Repository {
 
     private static File addFileInBlob(File addFile, String fileContentUID) {
         File addFileInBlob = join(BLOB_DIR, fileContentUID);
-        try {
-            addFileInBlob.createNewFile();
-            Utils.writeContents(addFileInBlob, Utils.readContents(addFile));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Utils.writeContents(addFileInBlob, Utils.readContents(addFile));
         return addFileInBlob;
     }
+    /**************Blob END*****************/
 
-
+    /***
+     * The commit is said to be tracking the saved files.
+     * 1. By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
+     * it will keep versions of files exactly as they are, and not update them.
+     * 2. A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
+     * in which case the commit will now include the version of the file that was staged instead of the version it got from its parent.
+     * 3. A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
+     * 4. Finally, files tracked in the current commit may be untracked in the new commit
+     * as a result being staged for removal by the rm command (below).
+     * 5. The commit just made becomes the “current commit”, and the head pointer now points to it.
+     * The previous head commit is this commit’s parent commit.
+     * @param arg
+     */
     public static void commit(String arg) {
+        checkInit();
+        Commit currentCommit = readCurrentCommit();
+        HashMap<File, String> currentMap = currentCommit.getMap();
+        if(currentMap.size() == 0) systemoutWithMessage("No changes added to the commit.");
+        currentMap.putAll(Utils.readObject(INDEX_File, HashMap.class));
+        String newCommitID = new Commit(arg, currentMap, currentCommit.thisID()).saveFile();
+
+        String currentBranch = findCurrentBranch();
+        //TODO to delete if find a solution
+        if(currentBranch == null) {
+            systemoutWithMessage("HEAD doesn't match any BRANCH files");
+        }
+        File curentBranch = join(BRANCH_DIR, currentBranch);
+        Utils.writeContents(curentBranch, newCommitID);
+        Utils.writeContents(HEAD, newCommitID);
+
+        initIndex();
+    }
+
+    private static void systemoutWithMessage(String s) {
+        System.out.println(s);
+        System.exit(0);
+    }
+
+    private static String findCurrentBranch() {
+        List<String> filesInBranch = Utils.plainFilenamesIn(BRANCH_DIR);
+        String result = null;
+        String headID = Utils.readContentsAsString(HEAD);
+        for(String branchName : filesInBranch) {
+            File file = join(BRANCH_DIR, branchName);
+            if(headID.equals(Utils.readContentsAsString(file))) {
+                result = branchName;
+            }
+
+        }
+        return result;
     }
 
     public static void checkoutBranch(String arg) {
