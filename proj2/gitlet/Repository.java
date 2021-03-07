@@ -38,6 +38,7 @@ public class Repository {
     public static final File COMMIT_DIR = join(GITLET_DIR, "commit");
     public static final File BLOB_DIR = join(GITLET_DIR, "blob");
     public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
+    //TODO files
     public static final File HEAD = join(GITLET_DIR, "HEAD");
     public static final File INDEX_File = join(GITLET_DIR, "index");
 
