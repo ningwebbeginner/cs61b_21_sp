@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static gitlet.Utils.*;
 
@@ -18,8 +19,7 @@ import static gitlet.Utils.*;
  *    - blob/ -- folder containing all of the persistent data for blobs
  *    - branch/ -- folder containing all of the persistent data for branch
  *    - HEAD -- file containing the current HEAD
- *    - (index) -- file containing the current staging area, file is created
- *                 depending on commands
+ *    - INDEX -- file containing the current staging area
  *  @author TODO
  */
 public class Repository {
@@ -49,10 +49,10 @@ public class Repository {
             COMMIT_DIR.mkdir();
             BLOB_DIR.mkdir();
             BRANCH_DIR.mkdir();
-            String master_UID = new Commit().saveFile();
-            addBranchFile("master", master_UID);
+            String master_ID = new Commit().saveFile();
+            addBranchFile("master", master_ID);
             initIndex();
-            Utils.writeContents(HEAD, master_UID);
+            Utils.writeContents(HEAD, master_ID);
         }
         else {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
@@ -64,9 +64,9 @@ public class Repository {
     }
 
 
-    private static void addBranchFile(String branch, String branch_uid) {
+    private static void addBranchFile(String branch, String branch_id) {
         File masterFile = join(BRANCH_DIR, branch);
-        Utils.writeContents(masterFile, branch_uid);
+        Utils.writeContents(masterFile, branch_id);
     }
 
     private static void checkInit() {
@@ -102,37 +102,41 @@ public class Repository {
     }
 
     private static void stagingAddFile(File addFile) {
-        String fileContentUID = getContentID(addFile);
-        if(readCurrentCommit().isIDexist(fileContentUID)) {
-            removeInIndex(addFile, fileContentUID);
+        String fileContentID = getContentID(addFile);
+        Blob blob = new Blob(addFile);
+        if(readCurrentCommit().isIDexist(fileContentID)) {
+            removeInIndex(addFile, fileContentID);
             return;
         }
-        File newFileInBlob = addFileInBlob(addFile, fileContentUID);
-        addtoIndex(addFile, fileContentUID);
+        File newFileInBlob = blob.addFileInBlob();
+        addtoIndex(addFile, fileContentID);
     }
 
     /****************INDEX******************/
     /****
      *INDEX is the staging are of the command.
      * The content of INDEX are entries:
-     * file to UID
+     * file to ID
      * or file to null to remove.
      */
     //TODO: test after finish commit()
     private static void removeInIndex(File file_CWD, String fileUID) {
             HashMap<File, String> readFile = Utils.readObject(INDEX_File, HashMap.class);
             if(readFile.containsValue(fileUID)) {
-                String removeFile = readFile.remove(readFile.get(file_CWD));
-                if(removeFile != null) removeFileInBlob(removeFile);
+                String removeFileID = readFile.remove(readFile.get(file_CWD));
+                if(removeFileID != null) new Blob(removeFileID).removeFileInBlob();
             }
             Utils.writeObject(INDEX_File, readFile);
     }
 
-    private static void addtoIndex(File file_CWD, String fileContentUID) {
+
+    // The function would override the blob which not be in previous Commit
+    private static void addtoIndex(File file_CWD, String fileContentID) {
             HashMap<File, String> readFile = Utils.readObject(INDEX_File, HashMap.class);
-            String RemoveFileUID = readFile.put(file_CWD, fileContentUID);
-            if(RemoveFileUID != null) {
-                boolean result = removeFileInBlob(RemoveFileUID);
+            String removeFileID = readFile.put(file_CWD, fileContentID);
+            if(removeFileID != null
+                    &&  !readCurrentCommit().isIDexist(fileContentID)) {
+                boolean result = new Blob(removeFileID).removeFileInBlob();
                 //TODO the file does not exist
             }
             Utils.writeObject(INDEX_File, readFile);
@@ -154,13 +158,13 @@ public class Repository {
         }
 
     /****************Blob (TO Be Class)******************/
-    private static boolean removeFileInBlob(String removeFileUID) {
-        File removeFileInBlob = join(BLOB_DIR, removeFileUID);
+    private static boolean removeFileInBlob(String removeFileID) {
+        File removeFileInBlob = join(BLOB_DIR, removeFileID);
             return removeFileInBlob.delete();
     }
 
-    private static File addFileInBlob(File addFile, String fileContentUID) {
-        File addFileInBlob = join(BLOB_DIR, fileContentUID);
+    private static File addFileInBlob(File addFile, String fileContentID) {
+        File addFileInBlob = join(BLOB_DIR, fileContentID);
         Utils.writeContents(addFileInBlob, Utils.readContents(addFile));
         return addFileInBlob;
     }
@@ -175,16 +179,21 @@ public class Repository {
      * 3. A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
      * 4. Finally, files tracked in the current commit may be untracked in the new commit
      * as a result being staged for removal by the rm command (below).
-     * 5. The commit just made becomes the “current commit”, and the head pointer now points to it.
-     * The previous head commit is this commit’s parent commit.
      * @param arg
      */
     public static void commit(String arg) {
         checkInit();
         Commit currentCommit = readCurrentCommit();
         HashMap<File, String> currentMap = currentCommit.getMap();
-        if(currentMap.size() == 0) systemoutWithMessage("No changes added to the commit.");
-        currentMap.putAll(Utils.readObject(INDEX_File, HashMap.class));
+        for(Map.Entry<File, String> fileEntry : currentMap.entrySet()) {
+            if(fileEntry.getValue() != null) {
+                Blob blob = new Blob(fileEntry.getValue());
+                blob.undeletableFile();
+            }
+        }
+        HashMap<File, String> indexMap = Utils.readObject(INDEX_File, HashMap.class);
+        if(indexMap.size() == 0) systemoutWithMessage("No changes added to the commit.");
+        currentMap.putAll(indexMap);
         String newCommitID = new Commit(arg, currentMap, currentCommit.thisID()).saveFile();
 
         String currentBranch = findCurrentBranch();

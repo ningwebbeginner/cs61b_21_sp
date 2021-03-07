@@ -40,15 +40,9 @@ public class Main {
                 int argLength = args.length;
                 validateNumArgs("checkout", args, 2, 4);
                 switch (argLength) {
-                    case 2:
-                        Repository.checkoutBranch(args[1]);
-                        break;
-                    case 3:
-                        Repository.checkoutFilename(args[1], args[2]);
-                        break;
-                    case 4:
-                        Repository.checkoutIdWithFilename(args[1], args[2], args[3]);
-                        break;
+                    case 2 -> Repository.checkoutBranch(args[1]);
+                    case 3 -> Repository.checkoutFilename(args[1], args[2]);
+                    case 4 -> Repository.checkoutIdWithFilename(args[1], args[2], args[3]);
                 }
             }
             case "log" -> {
