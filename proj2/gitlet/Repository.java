@@ -38,7 +38,6 @@ public class Repository {
     public static final File COMMIT_DIR = join(GITLET_DIR, "commit");
     public static final File BLOB_DIR = join(GITLET_DIR, "blob");
     public static final File BRANCH_DIR = join(GITLET_DIR, "branch");
-    //TODO files
     public static final File HEAD = join(GITLET_DIR, "HEAD");
     public static final File INDEX_File = join(GITLET_DIR, "index");
 
@@ -51,9 +50,9 @@ public class Repository {
             BLOB_DIR.mkdir();
             BRANCH_DIR.mkdir();
             String master_ID = new Commit().saveFile();
-            addBranchFile("master", master_ID);
+            File masterFile = addBranchFile("master", master_ID);
             initIndex();
-            Utils.writeContents(HEAD, master_ID);
+            Utils.writeObject(HEAD, masterFile);
         }
         else {
             System.out.println("A Gitlet version-control system already exists in the current directory.");
@@ -65,9 +64,10 @@ public class Repository {
     }
 
 
-    private static void addBranchFile(String branch, String branch_id) {
-        File masterFile = join(BRANCH_DIR, branch);
-        Utils.writeContents(masterFile, branch_id);
+    private static File addBranchFile(String branch, String branch_id) {
+        File branchFile = join(BRANCH_DIR, branch);
+        Utils.writeContents(branchFile, branch_id);
+        return branchFile;
     }
 
     private static void checkInit() {
@@ -128,6 +128,7 @@ public class Repository {
                 if(removeFileID != null) new Blob(removeFileID).removeFileInBlob();
             }
             Utils.writeObject(INDEX_File, readFile);
+            new Blob(fileUID).removeFileInBlob();       //remove the blob which is in index map
     }
 
 
@@ -145,7 +146,8 @@ public class Repository {
     /****************INDEX END******************/
 
     private static Commit readCurrentCommit() {
-        String headID = Utils.readContentsAsString(HEAD);
+        File headFilePath = Utils.readObject(HEAD, File.class);
+        String headID = Utils.readContentsAsString(headFilePath);
         File currentCommitFile = join(COMMIT_DIR, headID);
         if(!currentCommitFile.exists()) {
             return null;
@@ -185,6 +187,7 @@ public class Repository {
     public static void commit(String arg) {
         checkInit();
         Commit currentCommit = readCurrentCommit();
+        assert currentCommit != null;
         HashMap<File, String> currentMap = currentCommit.getMap();
         for(Map.Entry<File, String> fileEntry : currentMap.entrySet()) {
             if(fileEntry.getValue() != null) {
@@ -197,14 +200,9 @@ public class Repository {
         currentMap.putAll(indexMap);
         String newCommitID = new Commit(arg, currentMap, currentCommit.thisID()).saveFile();
 
-        String currentBranch = findCurrentBranch();
-        //TODO to delete if find a solution
-        if(currentBranch == null) {
-            systemoutWithMessage("HEAD doesn't match any BRANCH files");
-        }
-        File curentBranch = join(BRANCH_DIR, currentBranch);
+        String currentBranchName = Utils.readObject(HEAD, File.class).getName();
+        File curentBranch = join(BRANCH_DIR, currentBranchName);
         Utils.writeContents(curentBranch, newCommitID);
-        Utils.writeContents(HEAD, newCommitID);
 
         initIndex();
     }
@@ -214,19 +212,6 @@ public class Repository {
         System.exit(0);
     }
 
-    private static String findCurrentBranch() {
-        List<String> filesInBranch = Utils.plainFilenamesIn(BRANCH_DIR);
-        String result = null;
-        String headID = Utils.readContentsAsString(HEAD);
-        for(String branchName : filesInBranch) {
-            File file = join(BRANCH_DIR, branchName);
-            if(headID.equals(Utils.readContentsAsString(file))) {
-                result = branchName;
-            }
-
-        }
-        return result;
-    }
 
     public static void checkoutBranch(String arg) {
     }
