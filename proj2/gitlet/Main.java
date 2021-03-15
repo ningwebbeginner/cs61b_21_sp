@@ -28,6 +28,10 @@ public class Main {
                 validateNumArgs("add", args, 2);
                 Repository.add(args[1]);
             }
+            case "rm" -> {
+                validateNumArgs("rm", args, 2);
+                Repository.rmFile(args[1]);
+            }
             case "commit" -> {
                 if (args.length > 2) {
                     System.out.println("Please enter a commit message.");

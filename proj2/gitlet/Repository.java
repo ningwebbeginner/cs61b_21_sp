@@ -123,12 +123,14 @@ public class Repository {
     //TODO: test after finish commit()
     private static void removeInIndex(File file_CWD, String fileUID) {
             HashMap<File, String> readFile = Utils.readObject(INDEX_File, HashMap.class);
-            if(readFile.containsValue(fileUID)) {
-                String removeFileID = readFile.remove(readFile.get(file_CWD));
-                if(removeFileID != null) new Blob(removeFileID).removeFileInBlob();
-            }
+            //if(readFile.containsValue(fileUID)) {}
+            String removeFileID = readFile.remove(file_CWD);
+            if(removeFileID != null) new Blob(removeFileID).removeFileInBlob();
+
             Utils.writeObject(INDEX_File, readFile);
-            new Blob(fileUID).removeFileInBlob();       //remove the blob which is in index map
+            if(Utils.join(BLOB_DIR,fileUID).isFile()) {
+                new Blob(fileUID).removeFileInBlob();       //remove the blob which is in index map
+            }
     }
 
 
@@ -213,15 +215,129 @@ public class Repository {
     }
 
 
-    public static void checkoutBranch(String arg) {
+    public static void checkoutBranch(String branchName) {
+        checkInit();
+        checkBranch(branchName);
+        takesAllFilesatGivenbranch(branchName);
+        deleteFilesNotInBrach(branchName);
+
+        File branchFile = Utils.join(BRANCH_DIR, branchName);
+        Utils.writeObject(HEAD, branchFile);
     }
 
-    public static void checkoutFilename(String arg, String arg1) {
+    private static void deleteFilesNotInBrach(String branchName) {
+
     }
 
-    public static void checkoutIdWithFilename(String arg, String arg1, String arg2) {
+    private static void checkBranch(String branchName) {
+        if(!Utils.join(BRANCH_DIR, branchName).isFile()) {
+            systemoutWithMessage("No such branch exists.");
+        }
+        if(Utils.readObject(HEAD, File.class).getName().equals(branchName)) {
+            systemoutWithMessage("No need to checkout the current branch.");
+        }
+        List<String> filesName = Utils.plainFilenamesIn(CWD);
+        for(String fileName:filesName) {
+            String blobID = getContentID(Utils.join(CWD, fileName));
+            if(!Utils.join(BLOB_DIR, blobID).isFile()) {
+                systemoutWithMessage("There is an untracked file in the way; " +
+                        "delete it, or add and commit it first.");
+            }
+        }
+    }
+
+    private static void takesAllFilesatGivenbranch(String branchName) {
+        File branchFile = Utils.join(BRANCH_DIR, branchName);
+        String branchID = Utils.readContentsAsString(branchFile);
+        Commit commitInBranch = Utils.readObject(Utils.join(COMMIT_DIR, branchID),Commit.class);
+        HashMap<File, String> mapInBranch = commitInBranch.getMap();
+        for(Map.Entry<File, String> eachEntry : mapInBranch.entrySet()) {
+            File blob = Utils.join(BLOB_DIR, eachEntry.getValue());
+            String contest = Utils.readContentsAsString(blob);
+            Utils.writeContents(eachEntry.getKey(), contest);
+        }
+    }
+
+    public static void checkoutFilename(String arg, String fileName) {
+        checkInit();
+        if(arg.equals("--")) {
+            systemoutWithMessage("Incorrect operands.");
+        }
+        String commitID = Utils.readContentsAsString(Utils.readObject(HEAD, File.class));
+        checkoutIdWithFilename(commitID, fileName);
+    }
+
+    public static void checkoutIdWithFilename(String commitId, String arg, String fileName) {
+        checkInit();
+        if(!arg.equals("--")) {
+            checkoutIdWithFilename(commitId, fileName);
+        }
+        systemoutWithMessage("Incorrect operands.");
+    }
+
+    /**
+     * Takes the version of the file as it exists in the commit with the given id,
+     * and puts it in the working directory,
+     * overwriting the version of the file that’s already there if there is one.
+     * The new version of the file is not staged.
+     * @param commitId
+     * @param fileName
+     */
+    private static void checkoutIdWithFilename(String commitId, String fileName) {
+       File commitFile = getCommitFile(commitId);
+       File file = Utils.join(CWD, fileName);
+       Commit commit = Utils.readObject(commitFile, Commit.class);
+       HashMap<File, String> mapInCommit = commit.getMap();
+       if(!mapInCommit.containsKey(file)) {
+           systemoutWithMessage("File does not exist in that commit.");
+       }
+       String blobId = mapInCommit.get(file);
+       Utils.writeContents(file, new Blob(blobId).getContent());
+       removeInIndex(file,null);
+    }
+
+    private static File getCommitFile(String commitId) {
+        List<String> commitFiles = Utils.plainFilenamesIn(COMMIT_DIR);
+        int positionInString = -1;
+        for(String commitFile : commitFiles) {
+            positionInString = commitFile.indexOf(commitId);
+            if(positionInString == 0) {
+                return Utils.join(COMMIT_DIR, commitFile);
+            }
+        }
+        if(positionInString != 0) {
+            systemoutWithMessage("No commit with that id exists.");
+        }
+        return null;            //Never be reached
     }
 
     public static void log() {
     }
+
+
+    //TODO test remove file
+    public static void rmFile(String fileNameInCWD) {
+        File rmFile = join(CWD, fileNameInCWD);
+
+        if(!rmFile.exists()) {
+            return;
+        }
+            String contestID = getContentID(rmFile);
+            removeInIndex(rmFile, contestID);
+
+            Commit currentCommit = readCurrentCommit();
+
+            boolean checkTracked  = currentCommit.getMap().containsKey(rmFile);
+            if(checkTracked) {
+                addtoIndex(rmFile, null);
+                rmFile.delete();
+            }
+            if(!Utils.readObject(INDEX_File, HashMap.class).containsKey(rmFile)
+            && !checkTracked) {
+                systemoutWithMessage("No reason to remove the file.");
+            }
+
+    }
+
+
 }

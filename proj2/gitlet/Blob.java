@@ -48,6 +48,10 @@ public class Blob implements Serializable {
         this.fileContentID = fileContentID;
     }
 
+    public String getContent() {
+        return contentInCWD;
+    }
+
     public void undeletableFile() {
         deletable = false;
     }

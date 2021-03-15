@@ -4,12 +4,15 @@
 
 ## Classes and Data Structures
 
-### Class 1
+### Commit
 
 #### Fields
 
-1. Field 1
-2. Field 2
+* date
+* message
+* nameToBlob
+* parentID - 
+* secondParentID - not null after merge two branches
 
 
 ### Class 2

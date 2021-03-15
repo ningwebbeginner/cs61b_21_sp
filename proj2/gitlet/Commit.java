@@ -73,6 +73,10 @@ public class Commit implements Serializable {
         return Utils.sha1(Utils.serialize(this));
      }
 
+     public String getParentID() {
+        return parentID;
+     }
+
     public String saveFile() {
         String fileUID = Utils.sha1(Utils.serialize(this));
         File saveFile = join(COMMIT_DIR, fileUID);
