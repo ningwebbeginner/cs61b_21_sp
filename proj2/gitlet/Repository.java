@@ -215,19 +215,19 @@ public class Repository {
     }
 
 
+
+    //TODO test checkout after branch
     public static void checkoutBranch(String branchName) {
         checkInit();
         checkBranch(branchName);
         takesAllFilesatGivenbranch(branchName);
-        deleteFilesNotInBrach(branchName);
 
         File branchFile = Utils.join(BRANCH_DIR, branchName);
         Utils.writeObject(HEAD, branchFile);
+        Utils.writeObject(INDEX_File, new HashMap<File, String>());
     }
 
-    private static void deleteFilesNotInBrach(String branchName) {
 
-    }
 
     private static void checkBranch(String branchName) {
         if(!Utils.join(BRANCH_DIR, branchName).isFile()) {
@@ -247,6 +247,14 @@ public class Repository {
     }
 
     private static void takesAllFilesatGivenbranch(String branchName) {
+        Commit commitCurrent = readCurrentCommit();
+        HashMap<File, String> mapCurrent = commitCurrent.getMap();
+        for(Map.Entry<File, String> eachEntry : mapCurrent.entrySet()) {
+            File thisFile = eachEntry.getKey();
+            thisFile.delete();
+        }
+
+
         File branchFile = Utils.join(BRANCH_DIR, branchName);
         String branchID = Utils.readContentsAsString(branchFile);
         Commit commitInBranch = Utils.readObject(Utils.join(COMMIT_DIR, branchID),Commit.class);
@@ -312,6 +320,7 @@ public class Repository {
     }
 
     public static void log() {
+
     }
 
 
