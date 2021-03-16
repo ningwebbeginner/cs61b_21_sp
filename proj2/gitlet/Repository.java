@@ -200,10 +200,12 @@ public class Repository {
         HashMap<File, String> indexMap = Utils.readObject(INDEX_File, HashMap.class);
         if(indexMap.size() == 0) systemoutWithMessage("No changes added to the commit.");
         currentMap.putAll(indexMap);
-        String newCommitID = new Commit(arg, currentMap, currentCommit.thisID()).saveFile();
+
 
         String currentBranchName = Utils.readObject(HEAD, File.class).getName();
         File curentBranch = join(BRANCH_DIR, currentBranchName);
+
+        String newCommitID = new Commit(arg, currentMap, Utils.readContentsAsString(curentBranch)).saveFile();
         Utils.writeContents(curentBranch, newCommitID);
 
         initIndex();
@@ -268,7 +270,7 @@ public class Repository {
 
     public static void checkoutFilename(String arg, String fileName) {
         checkInit();
-        if(arg.equals("--")) {
+        if(!arg.equals("--")) {
             systemoutWithMessage("Incorrect operands.");
         }
         String commitID = Utils.readContentsAsString(Utils.readObject(HEAD, File.class));
@@ -278,9 +280,9 @@ public class Repository {
     public static void checkoutIdWithFilename(String commitId, String arg, String fileName) {
         checkInit();
         if(!arg.equals("--")) {
-            checkoutIdWithFilename(commitId, fileName);
+            systemoutWithMessage("Incorrect operands.");
         }
-        systemoutWithMessage("Incorrect operands.");
+        checkoutIdWithFilename(commitId, fileName);
     }
 
     /**
@@ -320,7 +322,17 @@ public class Repository {
     }
 
     public static void log() {
+        Commit commitHead = readCurrentCommit();
+        printLogRec(commitHead);
+    }
 
+    private static void printLogRec(Commit commitHead) {
+        System.out.println(commitHead);
+        String parentID = commitHead.getParentID();
+        if(parentID == null) {
+            return;
+        }
+        printLogRec(Utils.readObject(Utils.join(COMMIT_DIR, parentID), Commit.class));
     }
 
 
@@ -349,4 +361,6 @@ public class Repository {
     }
 
 
+    public static void globallog() {
+    }
 }

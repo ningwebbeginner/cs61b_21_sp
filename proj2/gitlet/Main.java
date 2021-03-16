@@ -53,6 +53,10 @@ public class Main {
                 validateNumArgs("log", args, 1);
                 Repository.log();
             }
+            case "global-log" -> {
+                validateNumArgs("global-log", args, 1);
+                Repository.globallog();
+            }
             default -> Utils.error("No command with that name exists.");
         }
     }
