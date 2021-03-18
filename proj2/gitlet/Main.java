@@ -57,6 +57,10 @@ public class Main {
                 validateNumArgs("global-log", args, 1);
                 Repository.globallog();
             }
+            case "find" -> {
+                validateNumArgs("find", args, 2);
+                Repository.find(args[2]);
+            }
             default -> Utils.error("No command with that name exists.");
         }
     }

@@ -61,6 +61,10 @@ public class Commit implements Serializable {
         secondParentID = parent2;
     }
 
+    public String getMessage() {
+        return  message;
+    }
+
     public Map<File, String> getMap() {
         return Collections.unmodifiableMap(nameToBlob);
     }

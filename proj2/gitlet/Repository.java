@@ -371,5 +371,28 @@ public class Repository {
 
 
     public static void globallog() {
+        List<String> commitFiles = Utils.plainFilenamesIn(COMMIT_DIR);
+        String result = "";
+        for(String commitFileID : commitFiles) {
+            File commitFile = Utils.join(COMMIT_DIR, commitFileID);
+            result += Utils.readObject(commitFile, Commit.class).toString();
+        }
+        System.out.print(result);
+    }
+
+    public static void find(String commitMessage) {
+        List<String> commitFiles = Utils.plainFilenamesIn(COMMIT_DIR);
+        String result = "";
+        for(String commitFileID : commitFiles) {
+            File commitFile = Utils.join(COMMIT_DIR, commitFileID);
+            Commit commit = Utils.readObject(commitFile, Commit.class);
+            if(commit.getMessage().equals(commitMessage)) {
+                result += commit.thisID() + "\n";
+            }
+        }
+        if(result.length() == 0) {
+            systemoutWithMessage("Found no commit with that message.");
+        }
+        System.out.print(result);
     }
 }
