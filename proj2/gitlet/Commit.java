@@ -6,8 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Date; // TODO: You'll likely use this in this class
-import java.util.HashMap;
+import java.util.*;
 
 import static gitlet.Utils.join;
 
@@ -62,8 +61,8 @@ public class Commit implements Serializable {
         secondParentID = parent2;
     }
 
-    public HashMap<File, String> getMap() {
-        return nameToBlob;
+    public Map<File, String> getMap() {
+        return Collections.unmodifiableMap(nameToBlob);
     }
 
     public boolean isIDexist(String Uid) {
@@ -79,16 +78,22 @@ public class Commit implements Serializable {
      }
 
     public String saveFile() {
-        String fileUID = Utils.sha1(Utils.serialize(this));
+        String fileUID = this.thisID();
         File saveFile = join(COMMIT_DIR, fileUID);
         Utils.writeObject(saveFile, this);
+        /**Reread to avoid reading different ID of saved Commit
+        File thisFile = Utils.join(COMMIT_DIR, fileUID);
+        String id = Utils.readObject(thisFile, Commit.class).thisID();
+        if(!id.equals(fileUID)) {
+            File newFile = Utils.join(COMMIT_DIR, fileUID);
+        }*/
         return fileUID;
     }
 
     @Override
     public String toString() {
         String result = "===\n";
-        result += "commit " +  thisID() + "\n";
+        result += "commit " +  this.thisID() + "\n";
         if(secondParentID != null) {
             result += "Merge: " + parentID.substring(0,7) + " " + secondParentID.substring(0,7) + "\n";
         }

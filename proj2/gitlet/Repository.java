@@ -128,7 +128,7 @@ public class Repository {
             if(removeFileID != null) new Blob(removeFileID).removeFileInBlob();
 
             Utils.writeObject(INDEX_File, readFile);
-            if(Utils.join(BLOB_DIR,fileUID).isFile()) {
+            if(fileUID != null && Utils.join(BLOB_DIR,fileUID).isFile()) {
                 new Blob(fileUID).removeFileInBlob();       //remove the blob which is in index map
             }
     }
@@ -190,7 +190,7 @@ public class Repository {
         checkInit();
         Commit currentCommit = readCurrentCommit();
         assert currentCommit != null;
-        HashMap<File, String> currentMap = currentCommit.getMap();
+        HashMap<File, String> currentMap = new HashMap<>(currentCommit.getMap());
         for(Map.Entry<File, String> fileEntry : currentMap.entrySet()) {
             if(fileEntry.getValue() != null) {
                 Blob blob = new Blob(fileEntry.getValue());
@@ -205,7 +205,14 @@ public class Repository {
         String currentBranchName = Utils.readObject(HEAD, File.class).getName();
         File curentBranch = join(BRANCH_DIR, currentBranchName);
 
-        String newCommitID = new Commit(arg, currentMap, Utils.readContentsAsString(curentBranch)).saveFile();
+        Commit newCommit = new Commit(arg, currentMap, Utils.readContentsAsString(curentBranch));
+        String newCommitID = newCommit.saveFile();
+
+        Commit commit = Utils.readObject(Utils.join(COMMIT_DIR, newCommitID), Commit.class);
+        if(!commit.thisID().equals(newCommitID)) {
+            Utils.join(COMMIT_DIR, newCommitID).delete();
+            newCommitID = commit.saveFile();
+        }
         Utils.writeContents(curentBranch, newCommitID);
 
         initIndex();
@@ -250,17 +257,16 @@ public class Repository {
 
     private static void takesAllFilesatGivenbranch(String branchName) {
         Commit commitCurrent = readCurrentCommit();
-        HashMap<File, String> mapCurrent = commitCurrent.getMap();
+        HashMap<File, String> mapCurrent = new HashMap<>(commitCurrent.getMap());
         for(Map.Entry<File, String> eachEntry : mapCurrent.entrySet()) {
             File thisFile = eachEntry.getKey();
             thisFile.delete();
         }
 
-
         File branchFile = Utils.join(BRANCH_DIR, branchName);
         String branchID = Utils.readContentsAsString(branchFile);
         Commit commitInBranch = Utils.readObject(Utils.join(COMMIT_DIR, branchID),Commit.class);
-        HashMap<File, String> mapInBranch = commitInBranch.getMap();
+        HashMap<File, String> mapInBranch = new HashMap<>(commitInBranch.getMap());
         for(Map.Entry<File, String> eachEntry : mapInBranch.entrySet()) {
             File blob = Utils.join(BLOB_DIR, eachEntry.getValue());
             String contest = Utils.readContentsAsString(blob);
@@ -297,7 +303,7 @@ public class Repository {
        File commitFile = getCommitFile(commitId);
        File file = Utils.join(CWD, fileName);
        Commit commit = Utils.readObject(commitFile, Commit.class);
-       HashMap<File, String> mapInCommit = commit.getMap();
+       HashMap<File, String> mapInCommit = new HashMap<>(commit.getMap());
        if(!mapInCommit.containsKey(file)) {
            systemoutWithMessage("File does not exist in that commit.");
        }
@@ -323,16 +329,19 @@ public class Repository {
 
     public static void log() {
         Commit commitHead = readCurrentCommit();
-        printLogRec(commitHead);
+        String result = "";
+        result = printLogRec(commitHead, result);
+        System.out.print(result);
     }
 
-    private static void printLogRec(Commit commitHead) {
-        System.out.println(commitHead);
+    private static String printLogRec(Commit commitHead, String result) {
+        //System.out.print(commitHead);
+        result += commitHead.toString();
         String parentID = commitHead.getParentID();
         if(parentID == null) {
-            return;
+            return result;
         }
-        printLogRec(Utils.readObject(Utils.join(COMMIT_DIR, parentID), Commit.class));
+        return printLogRec(Utils.readObject(Utils.join(COMMIT_DIR, parentID), Commit.class), result);
     }
 
 
