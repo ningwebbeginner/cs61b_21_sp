@@ -31,16 +31,16 @@ public class Commit implements Serializable {
     public static final File COMMIT_DIR = join(GITLET_DIR, "commit");
 
     /** The message of this Commit. */
-    private Date date;
-    private String message;
+    private final Date date;
+    private final String message;
     private HashMap<File, String> nameToBlob;
-    private String parentID;
-    private String secondParentID;
+    private final String parentID;
+    private final String secondParentID;
 
     public Commit() {
         date = new Date(0);
         message = "initial commit";
-        nameToBlob = new HashMap<>();
+        nameToBlob = new HashMap<File, String>();
         parentID = null;
         secondParentID = null;
     }

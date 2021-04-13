@@ -190,7 +190,7 @@ public class Repository {
         checkInit();
         Commit currentCommit = readCurrentCommit();
         assert currentCommit != null;
-        HashMap<File, String> currentMap = new HashMap<>(currentCommit.getMap());
+        HashMap<File, String> currentMap = new HashMap<File, String>(currentCommit.getMap());
         for(Map.Entry<File, String> fileEntry : currentMap.entrySet()) {
             if(fileEntry.getValue() != null) {
                 Blob blob = new Blob(fileEntry.getValue());
@@ -257,7 +257,7 @@ public class Repository {
 
     private static void takesAllFilesatGivenbranch(String branchName) {
         Commit commitCurrent = readCurrentCommit();
-        HashMap<File, String> mapCurrent = new HashMap<>(commitCurrent.getMap());
+        HashMap<File, String> mapCurrent = new HashMap<File, String>(commitCurrent.getMap());
         for(Map.Entry<File, String> eachEntry : mapCurrent.entrySet()) {
             File thisFile = eachEntry.getKey();
             thisFile.delete();
@@ -266,7 +266,7 @@ public class Repository {
         File branchFile = Utils.join(BRANCH_DIR, branchName);
         String branchID = Utils.readContentsAsString(branchFile);
         Commit commitInBranch = Utils.readObject(Utils.join(COMMIT_DIR, branchID),Commit.class);
-        HashMap<File, String> mapInBranch = new HashMap<>(commitInBranch.getMap());
+        HashMap<File, String> mapInBranch = new HashMap<File, String>(commitInBranch.getMap());
         for(Map.Entry<File, String> eachEntry : mapInBranch.entrySet()) {
             File blob = Utils.join(BLOB_DIR, eachEntry.getValue());
             String contest = Utils.readContentsAsString(blob);
@@ -303,7 +303,7 @@ public class Repository {
        File commitFile = getCommitFile(commitId);
        File file = Utils.join(CWD, fileName);
        Commit commit = Utils.readObject(commitFile, Commit.class);
-       HashMap<File, String> mapInCommit = new HashMap<>(commit.getMap());
+       HashMap<File, String> mapInCommit = new HashMap<File, String>(commit.getMap());
        if(!mapInCommit.containsKey(file)) {
            systemoutWithMessage("File does not exist in that commit.");
        }
