@@ -32,13 +32,13 @@ public class TestBSTMap {
             assertTrue(b.containsKey("hi" + i));
 
         }
-        b.printInOrder();
         assertEquals(455, b.size());
         b.clear();
         assertEquals(0, b.size());
         for (int i = 0; i < 455; i++) {
             assertTrue(null == b.get("hi" + i) && !b.containsKey("hi" + i));
         }
+
     }
 
     // assumes put works

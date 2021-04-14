@@ -2,6 +2,7 @@ package bstmap;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
@@ -105,12 +106,69 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public Set<K> keySet() {
-        throw new UnsupportedOperationException();
+        Set<K> keySet = new TreeSet<>();
+        if(root == null) {
+            return keySet;
+        }
+        else {
+            return keySet(keySet, root);
+        }
     }
+
+    private Set<K> keySet(Set<K> keySet, Node node) {
+        if(node == null) {
+            return keySet;
+        }
+        keySet.add(node.key);
+        keySet(keySet, node.left);
+        keySet(keySet, node.right);
+        return keySet;
+    }
+
 
     @Override
     public V remove(K key) {
-        throw new UnsupportedOperationException();
+        return remove(key, root);
+    }
+
+    private V remove(K key, Node node) {
+        if(node == null) {
+            return null;
+        }
+        int compare = key.compareTo(node.key);
+        if(compare < 0) {
+            return remove(key, node.left);
+        }
+        else if(compare > 0) {
+            return remove(key, node.right);
+        }
+        else {
+            node = removeNode(node);
+        }
+        node.size = size(node.left) + size(node.right) + 1;
+        return node.value;
+
+    }
+
+    private Node removeNode(Node node) {
+        if(node.left == null && node.right == null) {
+            return null;
+        }
+        else if(node.left == null && node.right != null) {
+            return node.right;
+        }
+        else{
+            Node maxNode = max(node.left);
+            node = removeMax(node.left);
+            maxNode = maxNode.left;
+        }
+    }
+
+    private Node max(Node root) {
+        if(root.right == null) {
+            return root;
+        }
+        return max(root.right);
     }
 
     @Override
@@ -129,14 +187,13 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         printNode(root);
     }
 
-    private String printNode(Node node) {
+    private void printNode(Node node) {
         if(node == null) {
-            return null;
+            return;
         }
-        System.out.println(node);
         printNode(node.left);
+        System.out.println(node);
         printNode(node.right);
-        return null;
         }
 
 
