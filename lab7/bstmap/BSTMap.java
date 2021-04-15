@@ -56,10 +56,10 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public V get(K key) {
-        return getKey(key, root);
+        return getKey(key, root).value;
     }
 
-    private V getKey(K key, Node node) {
+    private Node getKey(K key, Node node) {
         if (node == null) {
             return null;
         }
@@ -70,7 +70,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         if (compare > 0) {
             return getKey(key, node.right);
         }
-        return node.value;
+        return node;
     }
 
     @Override
@@ -128,40 +128,45 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public V remove(K key) {
-        return remove(key, root);
+         V value = get(key);
+         root = remove(key, root);
+         return value;
+
     }
 
-    private V remove(K key, Node node) {
+    private Node remove(K key, Node node) {
         if(node == null) {
             return null;
         }
         int compare = key.compareTo(node.key);
         if(compare < 0) {
-            return remove(key, node.left);
+            node.left = remove(key, node.left);
         }
         else if(compare > 0) {
-            return remove(key, node.right);
+            node.right = remove(key, node.right);
         }
         else {
-            node = removeNode(node);
+            if(node.left == null)     return node.right;
+            if(node.right == null)    return node.left;
+            Node temp = node;
+            node = max(node.left);
+            node.left = removeMax(node.left);
+            node.right = temp.right;
         }
         node.size = size(node.left) + size(node.right) + 1;
-        return node.value;
+        return node;
 
     }
 
-    private Node removeNode(Node node) {
-        if(node.left == null && node.right == null) {
-            return null;
+
+
+    private Node removeMax(Node node) {
+        if(node.right == null) {
+            return node.left;
         }
-        else if(node.left == null && node.right != null) {
-            return node.right;
-        }
-        else{
-            Node maxNode = max(node.left);
-            node = removeMax(node.left);
-            maxNode = maxNode.left;
-        }
+        node.right = removeMax(node.right);
+        node.size = size(node.left)+ size(node.right) + 1;
+        return node;
     }
 
     private Node max(Node root) {
